@@ -1,5 +1,7 @@
+import math
+
 def infix_to_postfix(infix_equation):
-    precedence = {'+': 1, '-': 1, '*': 2, '/': 2, '^': 3}
+    precedence = {'+': 1, '-': 1, '*': 2, '/': 2, '^': 3, 'log': 4}
 
     def extract_number(tokens, number=''):
         if tokens and (tokens[0].isdigit() or tokens[0] == '.'):
@@ -32,6 +34,10 @@ def infix_to_postfix(infix_equation):
         elif token == 'e':
             return infix_to_postfix_helper(rest, precedence, postfix_equation + ('2.71828',), stack)
 
+        elif token == 'l' and rest[:2] == ['o', 'g']:
+            # Skip the 'o' and 'g' tokens and push 'log' onto the stack
+            return infix_to_postfix_helper(rest[2:], precedence, postfix_equation, stack + ('log',))
+
         else:
             def pop_lower_precedence(postfix, stack, current_token):
                 if not stack or stack[-1] == '(' or precedence[current_token] > precedence[stack[-1]]:
@@ -45,8 +51,7 @@ def infix_to_postfix(infix_equation):
     infix_equation_list = list(infix_equation.replace(" ", ""))
     return infix_to_postfix_helper(infix_equation_list, precedence)
 
-
-infix_expression = "34^3*7-(2+3)-4+e^45"
+infix_expression = "34^3*7-(2+3)-4+log(45 + 5)"
 postfix_equation = infix_to_postfix(infix_expression)
 print(postfix_equation)
 
@@ -56,7 +61,8 @@ def evaluate(expression, stack=()):
                  '-': lambda x, y: x - y,
                  '*': lambda x, y: x * y,
                  '/': lambda x, y: x / y,
-                 '^': lambda x, y: x ** y}
+                 '^': lambda x, y: x ** y,
+                 'log': lambda x: math.log(x)}
 
     if not expression:
         return stack[0]
@@ -68,6 +74,10 @@ def evaluate(expression, stack=()):
     elif token in operators:
         if token == 'e':
             operand = stack[-1]
+            result = operators[token](operand)
+            new_stack = stack[:-1] + (result,)
+        elif token == 'log':
+            operand = stack[-1]  # value
             result = operators[token](operand)
             new_stack = stack[:-1] + (result,)
         else:
