@@ -36,7 +36,11 @@ def infix_to_postfix(infix_equation):
 
         elif token == 'l' and rest[:2] == ['o', 'g']:
             # Skip the 'o' and 'g' tokens and push 'log' onto the stack
-            return infix_to_postfix_helper(rest[2:], precedence, postfix_equation, stack + ('log',))
+            if rest[2].isdigit():
+                number, remaining_tokens = extract_number(rest[2:])
+                return infix_to_postfix_helper(remaining_tokens, precedence, postfix_equation, stack + ('log' + number,))
+            else:
+                return infix_to_postfix_helper(rest[2:], precedence, postfix_equation, stack + ('log',))
 
         else:
             def pop_lower_precedence(postfix, stack, current_token):
@@ -51,7 +55,7 @@ def infix_to_postfix(infix_equation):
     infix_equation_list = list(infix_equation.replace(" ", ""))
     return infix_to_postfix_helper(infix_equation_list, precedence)
 
-infix_expression = "34^3*7-(2+3)-4+log(45 + 5)"
+infix_expression = "34^3*7-(2+3)-4+log2(45 + 5)"
 postfix_equation = infix_to_postfix(infix_expression)
 print(postfix_equation)
 
@@ -62,7 +66,7 @@ def evaluate(expression, stack=()):
                  '*': lambda x, y: x * y,
                  '/': lambda x, y: x / y,
                  '^': lambda x, y: x ** y,
-                 'log': lambda x: math.log(x)}
+                 'log': lambda x, base: math.log(x, base)}
 
     if not expression:
         return stack[0]
@@ -71,20 +75,16 @@ def evaluate(expression, stack=()):
 
     if token.replace('.', '', 1).isdigit():
         new_stack = stack + (float(token),)
+    elif token.startswith('log'):
+        base = 10 if len(token) == 3 else int(token[3:])
+        operand = stack[-1]
+        result = operators['log'](operand, base)
+        new_stack = stack[:-1] + (result,)
     elif token in operators:
-        if token == 'e':
-            operand = stack[-1]
-            result = operators[token](operand)
-            new_stack = stack[:-1] + (result,)
-        elif token == 'log':
-            operand = stack[-1]  # value
-            result = operators[token](operand)
-            new_stack = stack[:-1] + (result,)
-        else:
-            operand2 = stack[-1]
-            operand1 = stack[-2]
-            result = operators[token](operand1, operand2)
-            new_stack = stack[:-2] + (result,)
+        operand2 = stack[-1]
+        operand1 = stack[-2]
+        result = operators[token](operand1, operand2)
+        new_stack = stack[:-2] + (result,)
     else:
         new_stack = stack
 
