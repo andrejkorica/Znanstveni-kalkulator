@@ -1,3 +1,4 @@
+from functools import reduce
 import math
 import sys
 if sys.version_info[0] == 3:
@@ -8,6 +9,7 @@ else:
 root = tk.Tk()
 root.geometry("312x324")
 root.title("Znanstveni kalkulator")
+
 
 def infix_to_postfix(infix_equation):
     precedence = {'+': 1, '-': 1, '*': 2, '/': 2, '^': 3, 'log': 4}
@@ -37,7 +39,8 @@ def infix_to_postfix(infix_equation):
                 else:
                     return pop_until_left_paren(postfix + (stack[-1],), stack[:-1])
 
-            postfix_equation, new_stack = pop_until_left_paren(postfix_equation, stack)
+            postfix_equation, new_stack = pop_until_left_paren(
+                postfix_equation, stack)
             return infix_to_postfix_helper(rest, precedence, postfix_equation, new_stack)
 
         elif token == 'e':
@@ -58,46 +61,48 @@ def infix_to_postfix(infix_equation):
                 else:
                     return pop_lower_precedence(postfix + (stack[-1],), stack[:-1], current_token)
 
-            postfix_equation, new_stack = pop_lower_precedence(postfix_equation, stack, token)
+            postfix_equation, new_stack = pop_lower_precedence(
+                postfix_equation, stack, token)
             return infix_to_postfix_helper(rest, precedence, postfix_equation, new_stack + (token,))
 
     infix_equation_list = list(infix_equation.replace(" ", ""))
     return infix_to_postfix_helper(infix_equation_list, precedence)
+
 
 infix_expression = "34^3*7-(2+3)-4+log2(45 + 5)"
 postfix_equation = infix_to_postfix(infix_expression)
 print(postfix_equation)
 
 
-def evaluate(expression, stack=()):
-    operators = {'+': lambda x, y: x + y,
-                 '-': lambda x, y: x - y,
-                 '*': lambda x, y: x * y,
-                 '/': lambda x, y: x / y,
-                 '^': lambda x, y: x ** y,
-                 'log': lambda x, base: math.log(x, base)}
+operators = {
+    '+': lambda x, y: x + y,
+    '-': lambda x, y: x - y,
+    '*': lambda x, y: x * y,
+    '/': lambda x, y: x / y,
+    '^': lambda x, y: x ** y,
+    'log': lambda x, base: math.log(x, base)
+}
 
-    if not expression:
-        return stack[0]
 
-    token, *rest = expression
+def evaluate(expression):
+    def process(stack, token):
+        if token.replace('.', '', 1).isdigit():
+            return stack + (float(token),)
+        elif token.startswith('log'):
+            base = 10 if len(token) == 3 else int(token[3:])
+            operand = stack[-1]
+            result = operators['log'](operand, base)
+            return stack[:-1] + (result,)
+        elif token in operators:
+            operand2 = stack[-1]
+            operand1 = stack[-2]
+            result = operators[token](operand1, operand2)
+            return stack[:-2] + (result,)
+        else:
+            return stack
 
-    if token.replace('.', '', 1).isdigit():
-        new_stack = stack + (float(token),)
-    elif token.startswith('log'):
-        base = 10 if len(token) == 3 else int(token[3:])
-        operand = stack[-1]
-        result = operators['log'](operand, base)
-        new_stack = stack[:-1] + (result,)
-    elif token in operators:
-        operand2 = stack[-1]
-        operand1 = stack[-2]
-        result = operators[token](operand1, operand2)
-        new_stack = stack[:-2] + (result,)
-    else:
-        new_stack = stack
-
-    return evaluate(rest, new_stack)
+    stack = reduce(process, expression, ())
+    return stack[0] if stack else None
 
 
 def pressBtn(value):
@@ -105,10 +110,12 @@ def pressBtn(value):
     expression = expression + str(value)
     textDisplay.set(expression)
 
+
 def clear():
     global expression
     textDisplay.set("0")
     expression = ""
+
 
 def result():
     try:
@@ -117,6 +124,7 @@ def result():
         textDisplay.set(expression)
     except Exception as e:
         textDisplay.set("Error")
+
 
 expression = ""
 textDisplay = tk.StringVar()
@@ -130,15 +138,18 @@ buttonFrame.columnconfigure(3, weight=1)
 
 # INPUT FIELD
 
-inputField = tk.Entry(root, font=("Arial", 18), textvariable=textDisplay, justify="right")
+inputField = tk.Entry(root, font=("Arial", 18),
+                      textvariable=textDisplay, justify="right")
 inputField.grid(row=0, column=0, columnspan=4, sticky="nsew")
 
-inputField.pack(fill="both" )
+inputField.pack(fill="both")
 
 # PRVI RED
-btnLog = tk.Button(buttonFrame, text="log", font=("Arial", 18), command=lambda: pressBtn("log"))
+btnLog = tk.Button(buttonFrame, text="log", font=(
+    "Arial", 18), command=lambda: pressBtn("log"))
 btnLog.grid(row=1, column=0, sticky="nsew")
-btnPower = tk.Button(buttonFrame, text="^", font=("Arial", 18), command=lambda: pressBtn("^"))
+btnPower = tk.Button(buttonFrame, text="^", font=(
+    "Arial", 18), command=lambda: pressBtn("^"))
 btnPower.grid(row=1, column=1, sticky="nsew")
 btn9 = tk.Button(buttonFrame, text="e", font=("Arial", 18))
 btn9.grid(row=1, column=2, sticky="nsew")
@@ -146,56 +157,72 @@ btnClear = tk.Button(buttonFrame, text="C", font=("Arial", 18), command=clear)
 btnClear.grid(row=1, column=3, sticky="nsew")
 
 # DRUGI RED
-btnBO = tk.Button(buttonFrame, text="(", font=("Arial", 18), command=lambda: pressBtn("("))
+btnBO = tk.Button(buttonFrame, text="(", font=(
+    "Arial", 18), command=lambda: pressBtn("("))
 btnBO.grid(row=2, column=0, sticky="nsew")
-btnBC = tk.Button(buttonFrame, text=")", font=("Arial", 18), command=lambda: pressBtn(")"))
+btnBC = tk.Button(buttonFrame, text=")", font=(
+    "Arial", 18), command=lambda: pressBtn(")"))
 btnBC.grid(row=2, column=1, sticky="nsew")
 btn9 = tk.Button(buttonFrame, text="", font=("Arial", 18))
 btn9.grid(row=2, column=2, sticky="nsew")
-btnDevide = tk.Button(buttonFrame, text="÷", font=("Arial", 18), command=lambda: pressBtn("/"))
+btnDevide = tk.Button(buttonFrame, text="÷", font=(
+    "Arial", 18), command=lambda: pressBtn("/"))
 btnDevide.grid(row=2, column=3, sticky="nsew")
 
 # TREĆI RED
-btn7 = tk.Button(buttonFrame, text="7", font=("Arial", 18), command=lambda: pressBtn(7))
+btn7 = tk.Button(buttonFrame, text="7", font=(
+    "Arial", 18), command=lambda: pressBtn(7))
 btn7.grid(row=3, column=0, sticky="nsew")
-btn8 = tk.Button(buttonFrame, text="8", font=("Arial", 18), command=lambda: pressBtn(8))
+btn8 = tk.Button(buttonFrame, text="8", font=(
+    "Arial", 18), command=lambda: pressBtn(8))
 btn8.grid(row=3, column=1, sticky="nsew")
-btn9 = tk.Button(buttonFrame, text="9", font=("Arial", 18), command=lambda: pressBtn(9))
+btn9 = tk.Button(buttonFrame, text="9", font=(
+    "Arial", 18), command=lambda: pressBtn(9))
 btn9.grid(row=3, column=2, sticky="nsew")
-btnX = tk.Button(buttonFrame, text="×", font=("Arial", 18), command=lambda: pressBtn("*"))
+btnX = tk.Button(buttonFrame, text="×", font=(
+    "Arial", 18), command=lambda: pressBtn("*"))
 btnX.grid(row=3, column=3, sticky="nsew")
 
 # ČETVRTI RED
-btn4 = tk.Button(buttonFrame, text="4", font=("Arial", 18), command=lambda: pressBtn(4))
+btn4 = tk.Button(buttonFrame, text="4", font=(
+    "Arial", 18), command=lambda: pressBtn(4))
 btn4.grid(row=4, column=0, sticky="nsew")
-btn5 = tk.Button(buttonFrame, text="5", font=("Arial", 18), command=lambda: pressBtn(5))
+btn5 = tk.Button(buttonFrame, text="5", font=(
+    "Arial", 18), command=lambda: pressBtn(5))
 btn5.grid(row=4, column=1, sticky="nsew")
-btn6 = tk.Button(buttonFrame, text="6", font=("Arial", 18), command=lambda: pressBtn(6))
+btn6 = tk.Button(buttonFrame, text="6", font=(
+    "Arial", 18), command=lambda: pressBtn(6))
 btn6.grid(row=4, column=2, sticky="nsew")
-btnMinus = tk.Button(buttonFrame, text="-", font=("Arial", 18), command=lambda: pressBtn("-"))
+btnMinus = tk.Button(buttonFrame, text="-", font=("Arial",
+                     18), command=lambda: pressBtn("-"))
 btnMinus.grid(row=4, column=3, sticky="nsew")
 
 
 # PETI RED
-btn1 = tk.Button(buttonFrame, text="1", font=("Arial", 18), command=lambda: pressBtn(1))
+btn1 = tk.Button(buttonFrame, text="1", font=(
+    "Arial", 18), command=lambda: pressBtn(1))
 btn1.grid(row=5, column=0, sticky="nsew")
-btn2 = tk.Button(buttonFrame, text="2", font=("Arial", 18), command=lambda: pressBtn(2))
+btn2 = tk.Button(buttonFrame, text="2", font=(
+    "Arial", 18), command=lambda: pressBtn(2))
 btn2.grid(row=5, column=1, sticky="nsew")
-btn3 = tk.Button(buttonFrame, text="3", font=("Arial", 18), command=lambda: pressBtn(3))
+btn3 = tk.Button(buttonFrame, text="3", font=(
+    "Arial", 18), command=lambda: pressBtn(3))
 btn3.grid(row=5, column=2, sticky="nsew")
-btnPlus = tk.Button(buttonFrame, text="+", font=("Arial", 18), command=lambda: pressBtn("+"))
+btnPlus = tk.Button(buttonFrame, text="+", font=("Arial",
+                    18), command=lambda: pressBtn("+"))
 btnPlus.grid(row=5, column=3, sticky="nsew")
 
 # PETI RED
 btn1 = tk.Button(buttonFrame, text="", font=("Arial", 18))
 btn1.grid(row=6, column=0, sticky="nsew")
-btn0 = tk.Button(buttonFrame, text="0", font=("Arial", 18), command=lambda: pressBtn(0))
+btn0 = tk.Button(buttonFrame, text="0", font=(
+    "Arial", 18), command=lambda: pressBtn(0))
 btn0.grid(row=6, column=1, sticky="nsew")
-btn3 = tk.Button(buttonFrame, text=".", font=("Arial", 18), command=lambda: pressBtn("."))
+btn3 = tk.Button(buttonFrame, text=".", font=(
+    "Arial", 18), command=lambda: pressBtn("."))
 btn3.grid(row=6, column=2, sticky="nsew")
 btnEqual = tk.Button(buttonFrame, text="=", font=("Arial", 18), command=result)
 btnEqual.grid(row=6, column=3, sticky="nsew")
-
 
 
 buttonFrame.pack(fill="x")
