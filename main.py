@@ -125,6 +125,12 @@ def result():
     except Exception as e:
         textDisplay.set("Error")
 
+def delete_last():
+    global expression
+    if expression:
+        expression = expression[:-1]
+        textDisplay.set(expression)
+
 
 expression = ""
 textDisplay = tk.StringVar()
@@ -151,8 +157,9 @@ btnLog.grid(row=1, column=0, sticky="nsew")
 btnPower = tk.Button(buttonFrame, text="^", font=(
     "Arial", 18), command=lambda: pressBtn("^"))
 btnPower.grid(row=1, column=1, sticky="nsew")
-btn9 = tk.Button(buttonFrame, text="e", font=("Arial", 18))
-btn9.grid(row=1, column=2, sticky="nsew")
+
+btnDel = tk.Button(buttonFrame, text="Del", font =("Arial", 18), command=delete_last)
+btnDel.grid(row=1, column=2, sticky="nsew")
 btnClear = tk.Button(buttonFrame, text="C", font=("Arial", 18), command=clear)
 btnClear.grid(row=1, column=3, sticky="nsew")
 
@@ -163,11 +170,12 @@ btnBO.grid(row=2, column=0, sticky="nsew")
 btnBC = tk.Button(buttonFrame, text=")", font=(
     "Arial", 18), command=lambda: pressBtn(")"))
 btnBC.grid(row=2, column=1, sticky="nsew")
-btn9 = tk.Button(buttonFrame, text="", font=("Arial", 18))
+btn9 = tk.Button(buttonFrame, text="e", font=("Arial", 18))
 btn9.grid(row=2, column=2, sticky="nsew")
 btnDevide = tk.Button(buttonFrame, text="÷", font=(
     "Arial", 18), command=lambda: pressBtn("/"))
 btnDevide.grid(row=2, column=3, sticky="nsew")
+
 
 # TREĆI RED
 btn7 = tk.Button(buttonFrame, text="7", font=(
@@ -223,6 +231,8 @@ btn3 = tk.Button(buttonFrame, text=".", font=(
 btn3.grid(row=6, column=2, sticky="nsew")
 btnEqual = tk.Button(buttonFrame, text="=", font=("Arial", 18), command=result)
 btnEqual.grid(row=6, column=3, sticky="nsew")
+
+
 
 
 buttonFrame.pack(fill="x")
