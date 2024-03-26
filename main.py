@@ -172,7 +172,7 @@ btnBO.grid(row=2, column=0, sticky="nsew")
 btnBC = tk.Button(buttonFrame, text=")", font=(
     "Arial", 18), command=lambda: pressBtn(")"))
 btnBC.grid(row=2, column=1, sticky="nsew")
-btn9 = tk.Button(buttonFrame, text="e", font=("Arial", 18))
+btn9 = tk.Button(buttonFrame, text="e", font=("Arial", 18), command=lambda: pressBtn("e"))
 btn9.grid(row=2, column=2, sticky="nsew")
 btnDevide = tk.Button(buttonFrame, text="÷", font=(
     "Arial", 18), command=lambda: pressBtn("/"))
