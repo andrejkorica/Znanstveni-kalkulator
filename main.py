@@ -15,7 +15,7 @@ def infix_to_postfix(infix_equation):
     precedence = {'+': 1, '-': 1, '*': 2, '/': 2, '^': 3, 'log': 4}
 
     def extract_number(tokens, number=''):
-        if tokens and (tokens[0].isdigit() or tokens[0] == '.'):
+        if tokens and (tokens[0].isdigit() or tokens[0] == '.' or (tokens[0] == '-' and (not number or number[-1] in precedence))):
             return extract_number(tokens[1:], number + tokens[0])
         return number, tokens
 
@@ -25,7 +25,7 @@ def infix_to_postfix(infix_equation):
 
         token, *rest = tokens
 
-        if token.isdigit() or token == '.':
+        if token.isdigit() or token == '.' or (token == '-' and (not postfix_equation or postfix_equation[-1] == '(')):
             number, remaining_tokens = extract_number(tokens)
             return infix_to_postfix_helper(remaining_tokens, precedence, postfix_equation + (number,), stack)
 
@@ -39,8 +39,7 @@ def infix_to_postfix(infix_equation):
                 else:
                     return pop_until_left_paren(postfix + (stack[-1],), stack[:-1])
 
-            postfix_equation, new_stack = pop_until_left_paren(
-                postfix_equation, stack)
+            postfix_equation, new_stack = pop_until_left_paren(postfix_equation, stack)
             return infix_to_postfix_helper(rest, precedence, postfix_equation, new_stack)
 
         elif token == 'e':
@@ -61,18 +60,15 @@ def infix_to_postfix(infix_equation):
                 else:
                     return pop_lower_precedence(postfix + (stack[-1],), stack[:-1], current_token)
 
-            postfix_equation, new_stack = pop_lower_precedence(
-                postfix_equation, stack, token)
+            postfix_equation, new_stack = pop_lower_precedence(postfix_equation, stack, token)
             return infix_to_postfix_helper(rest, precedence, postfix_equation, new_stack + (token,))
 
     infix_equation_list = list(infix_equation.replace(" ", ""))
     return infix_to_postfix_helper(infix_equation_list, precedence)
 
-
-infix_expression = "34^3*7-(2+3)-4+log2(45 + 5)"
+infix_expression = "-34^3*7-(2+3)-4+log5(45 + 5)"
 postfix_equation = infix_to_postfix(infix_expression)
 print(postfix_equation)
-
 
 operators = {
     '+': lambda x, y: x + y,
@@ -86,16 +82,19 @@ operators = {
 
 def evaluate(expression):
     def process(stack, token):
-        if token.replace('.', '', 1).isdigit():
+        if token.replace('.', '', 1).replace('-', '', 1).isdigit():  # Updated this line
             return stack + (float(token),)
+
         elif token.startswith('log'):
             base = 10 if len(token) == 3 else int(token[3:])
             operand = stack[-1]
             result = operators['log'](operand, base)
+
             return stack[:-1] + (result,)
         elif token in operators:
             operand2 = stack[-1]
             operand1 = stack[-2]
+
             result = operators[token](operand1, operand2)
             return stack[:-2] + (result,)
         else:
@@ -104,6 +103,9 @@ def evaluate(expression):
     stack = reduce(process, expression, ())
     return stack[0] if stack else None
 
+
+
+print(evaluate(postfix_equation))
 
 def pressBtn(value):
     global expression
